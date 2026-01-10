@@ -3,74 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RHYTHM! Dashboard</title>
+    <title>RHYTHM! DASHBOARD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,700;1,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         body { 
             font-family: 'Exo 2', sans-serif;
             background-color: #0f172a;
-            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+            color: white;
+            overflow-x: hidden;
         }
         .osu-card {
-            clip-path: polygon(0 0, 100% 0, 98% 100%, 2% 100%);
-            transition: transform 0.2s, filter 0.2s;
+            clip-path: polygon(0 0, 100% 0, 97% 100%, 3% 100%);
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
         }
-        .osu-card:hover {
-            transform: scale(1.01);
-            filter: brightness(1.2);
+        .osu-card:hover { transform: translateX(5px); filter: brightness(1.2); }
+        
+        #map { height: 500px; border-radius: 20px; z-index: 1; }
+        
+        .pulse-marker {
+            background: #22d3ee;
+            border-radius: 50%;
+            box-shadow: 0 0 0 rgba(34, 211, 238, 0.4);
+            animation: pulse 2s infinite;
         }
-        .osu-rank {
-            font-style: italic;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(34, 211, 238, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0); }
         }
-        .glass {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .neon-border-pink { border-bottom: 4px solid #f472b6; box-shadow: 0 4px 15px -5px #f472b6; }
-        .neon-border-cyan { border-bottom: 4px solid #22d3ee; box-shadow: 0 4px 15px -5px #22d3ee; }
+        .active-tab { border-bottom: 4px solid #f472b6; color: #f472b6; }
     </style>
 </head>
-<body class="text-white min-h-screen">
-
-    <div class="fixed inset-0 overflow-hidden -z-10 opacity-20">
-        <div class="absolute -top-24 -left-24 w-96 h-96 bg-pink-500 rounded-full blur-[120px]"></div>
-        <div class="absolute bottom-0 right-0 w-[500px] h-[500px] bg-cyan-500 rounded-full blur-[150px]"></div>
-    </div>
-
-    <div class="max-w-5xl mx-auto px-4 py-12">
-        <header class="flex flex-col items-center mb-16 space-y-4">
-            <div class="w-32 h-32 bg-pink-500 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(244,114,182,0.4)] border-8 border-white animate-pulse">
-                <span class="text-6xl font-black italic">!</span>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-col items-center mb-12">
+            <div class="w-24 h-24 bg-pink-500 rounded-full flex items-center justify-center shadow-[0_0_30px_#f472b6] border-4 border-white mb-4">
+                <span class="text-5xl font-black italic">!</span>
             </div>
-            <h1 class="text-5xl font-black italic tracking-tighter">RHYTHM<span class="text-pink-500">STATS</span></h1>
+            <h1 class="text-4xl font-black italic tracking-tighter">RHYTHM<span class="text-pink-500">STATS</span></h1>
         </header>
 
-        <div class="flex justify-center mb-12">
-            <div class="glass p-2 rounded-full flex w-full max-w-xl border-2 border-slate-700 focus-within:border-pink-500 transition-all">
-                <input id="playerNameInput" type="text" placeholder="Search Player..." 
-                    class="bg-transparent border-none px-6 py-2 w-full focus:outline-none text-xl">
-                <button onclick="searchPlayer()" class="bg-pink-500 hover:bg-pink-400 px-8 py-2 rounded-full font-bold uppercase tracking-widest transition">GO</button>
+        <nav class="flex justify-center space-x-12 mb-10 text-xl font-bold italic uppercase tracking-widest border-b border-slate-800">
+            <button onclick="switchTab('ranking')" id="btn-ranking" class="pb-2 active-tab transition-all">Ranking</button>
+            <button onclick="switchTab('map')" id="btn-map" class="pb-2 text-slate-500 hover:text-cyan-400 transition-all">World Map</button>
+        </nav>
+
+        <div id="view-ranking" class="space-y-12">
+            <section class="max-w-2xl mx-auto mb-12">
+                <div class="flex bg-slate-800 rounded-full p-1 border border-slate-700">
+                    <input id="playerNameInput" type="text" placeholder="Search Player..." class="bg-transparent flex-1 px-6 outline-none">
+                    <button onclick="searchPlayer()" class="bg-pink-500 hover:bg-pink-400 px-8 py-2 rounded-full font-bold">GO</button>
+                </div>
+                <div id="playerStatsResult" class="mt-6 hidden"></div>
+            </section>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h2 class="text-2xl font-black italic mb-6 flex items-center"><span class="w-2 h-8 bg-pink-500 mr-3"></span>TOP PLAYERS</h2>
+                    <div id="playerLeaderboard" class="space-y-3"></div>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-black italic mb-6 flex items-center"><span class="w-2 h-8 bg-cyan-500 mr-3"></span>COUNTRIES</h2>
+                    <div id="countryLeaderboard" class="space-y-3"></div>
+                </div>
             </div>
         </div>
 
-        <div id="playerStatsResult" class="mb-12 hidden"></div>
-
-        <div class="grid md:grid-cols-2 gap-12">
-            <div>
-                <h2 class="text-2xl font-black italic mb-6 uppercase tracking-wider flex items-center">
-                    <span class="w-2 h-8 bg-pink-500 mr-3"></span> Global Ranking
-                </h2>
-                <div id="playerLeaderboard" class="space-y-4"></div>
-            </div>
-
-            <div>
-                <h2 class="text-2xl font-black italic mb-6 uppercase tracking-wider flex items-center">
-                    <span class="w-2 h-8 bg-cyan-500 mr-3"></span> Country Standings
-                </h2>
-                <div id="countryLeaderboard" class="space-y-4"></div>
+        <div id="view-map" class="hidden animate-fade-in">
+            <div class="bg-slate-800 p-2 rounded-3xl border-2 border-cyan-500/30">
+                <div id="map"></div>
             </div>
         </div>
     </div>
