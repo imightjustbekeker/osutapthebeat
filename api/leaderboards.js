@@ -2,10 +2,10 @@ import { kv } from '@vercel/kv';
 
 export default async function handler(req, res) {
   try {
-    // Get top 10 players from Redis Sorted Set
+    // Get top 10 players from Redis Sorted Set because
     const topPlayersRaw = await kv.zrange('leaderboard_players', 0, 9, { rev: true, withScores: true });
     
-    // Format: Redis returns [member, score, member, score]
+    // Format: Redis returns [member, score, member, score] ( im planning to redo the entire two repos for this kms ) 
     const topPlayers = [];
     for (let i = 0; i < topPlayersRaw.length; i += 2) {
       topPlayers.push({ player: topPlayersRaw[i], points: topPlayersRaw[i+1] });
