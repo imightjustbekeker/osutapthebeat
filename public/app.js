@@ -1,13 +1,6 @@
-/**
- * RHYTHM! DASHBOARD - COMPLETE FRONTEND LOGIC
- * Handles: Tabs, Player Search, Leaderboards, and Leaflet GeoJSON Map
- */
-
 let map;
 
-// --- 1. CORE UTILITIES ---
 
-// Assigns Osu-style letter ranks based on accuracy
 function getRank(acc) {
     if (acc >= 98) return { char: 'SS', color: 'text-yellow-400' };
     if (acc >= 95) return { char: 'S', color: 'text-pink-400' };
@@ -15,31 +8,25 @@ function getRank(acc) {
     return { char: 'B', color: 'text-blue-400' };
 }
 
-// --- 2. TAB SYSTEM ---
 
 function switchTab(tab) {
     const isMap = tab === 'map';
     
-    // Toggle Visibility
     document.getElementById('view-ranking').classList.toggle('hidden', isMap);
     document.getElementById('view-map').classList.toggle('hidden', !isMap);
     
-    // Update Button Styling
     document.getElementById('btn-ranking').className = isMap ? "pb-2 text-slate-500" : "pb-2 active-tab";
     document.getElementById('btn-map').className = isMap ? "pb-2 active-tab text-cyan-400" : "pb-2 text-slate-500";
 
-    // Initialize map only when needed
     if (isMap) initMap();
 }
 
-// --- 3. LEADERBOARDS & SEARCH ---
 
 async function loadLeaderboards() {
     try {
         const res = await fetch('/api/leaderboards');
         const data = await res.json();
 
-        // Render Top Players
         const playerList = document.getElementById('playerLeaderboard');
         playerList.innerHTML = data.topPlayers.map((p, i) => `
             <div class="osu-card p-4 flex justify-between items-center border-l-4 border-pink-500">
@@ -51,7 +38,6 @@ async function loadLeaderboards() {
             </div>
         `).join('') || '<p class="opacity-50">No scores recorded yet.</p>';
 
-        // Render Top Countries
         const countryList = document.getElementById('countryLeaderboard');
         countryList.innerHTML = data.topCountries.map((c, i) => `
             <div class="osu-card p-4 flex justify-between items-center border-l-4 border-cyan-500">
@@ -107,7 +93,6 @@ async function searchPlayer() {
     }
 }
 
-// --- 4. MAP VISUALIZATION ---
 
 async function initMap() {
     if (map) {
@@ -115,7 +100,6 @@ async function initMap() {
         return;
     }
 
-    // Standard Leaflet Setup
     map = L.map('map', { 
         zoomControl: false, 
         attributionControl: false,
@@ -165,5 +149,4 @@ async function initMap() {
     }
 }
 
-// Start app
 loadLeaderboards();
