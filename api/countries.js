@@ -15,7 +15,7 @@ export default async function handler(req, res) {
       };
     }));
 
-    // Sort descending by totalPoints
+    // :smiley: 
     results.sort((a, b) => b.totalPoints - a.totalPoints);
 
     return res.status(200).json(results);
