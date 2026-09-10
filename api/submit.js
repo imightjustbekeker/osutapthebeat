@@ -13,22 +13,18 @@ export default async function handler(req, res) {
     const playerKey = `player:${player}`;
     const countryKey = `country:${country}`;
 
-    // 1. Update Player Stats
     const playerData = (await kv.get(playerKey)) || { recentScores: [], country };
     
-    // Add new score to the start and trim to last 10
     const newRecentScores = [{ points, accuracy }, ...playerData.recentScores].slice(0, 10);
     
     await kv.set(playerKey, {
       player,
       country,
-      points, // Latest
-      accuracy, // Latest
+      points,
+      accuracy,
       recentScores: newRecentScores
     });
 
-    // 2. Update Country Stats (Atomic increment)
-    // If it's a first-time player for this country, we track it via a Set to get playerCount
     await kv.sadd('countries_list', country);
     await kv.sadd(`country_players:${country}`, player);
     
